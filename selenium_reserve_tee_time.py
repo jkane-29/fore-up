@@ -4,6 +4,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 from rich import print
 
@@ -16,17 +18,50 @@ config = dotenv_values(".env")
 def run():
 
     # if you wish to use Chrome instead of Firefox, change this to the Chrome line
-    # driver = webdriver.Chrome()
-    driver = webdriver.Firefox()
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    # driver = webdriver.Firefox()
 
     # open a browser window and go to the foreup website
     driver.get(config["FOREUP_SOFTWARE_URL"])
-
-    # click on the Annual Member booking class button
-    driver.find_element(By.XPATH, "/html/body/div[2]/div/div[2]/div/div/button[4]").click()
-
-    # click on the login button
-    driver.find_element(By.XPATH, "/html/body/div[2]/div/div[2]/div/div/div/p[1]/button").click()
+    
+    print("Waiting for page to load...")
+    import time
+    time.sleep(3)
+    
+    print(f"Current page title: {driver.title}")
+    print(f"Current URL: {driver.current_url}")
+    
+    try:
+        # click on the Annual Member booking class button
+        print("Looking for Annual Member booking class button...")
+        booking_button = driver.find_element(By.XPATH, "/html/body/div[2]/div/div[2]/div/div/button[4]")
+        print("Found booking button, clicking it...")
+        booking_button.click()
+        time.sleep(2)
+    except Exception as e:
+        print(f"Could not find booking button: {e}")
+        print("Trying to find alternative booking class buttons...")
+        try:
+            buttons = driver.find_elements(By.TAG_NAME, "button")
+            print(f"Found {len(buttons)} buttons on the page")
+            for i, btn in enumerate(buttons[:10]):  # Show first 10 buttons
+                print(f"Button {i}: text='{btn.text}', visible={btn.is_displayed()}")
+        except Exception as e2:
+            print(f"Error finding buttons: {e2}")
+    
+    try:
+        # click on the login button
+        print("Looking for login button...")
+        login_button = driver.find_element(By.XPATH, "/html/body/div[2]/div/div[2]/div/div/div/p[1]/button")
+        print("Found login button, clicking it...")
+        login_button.click()
+        time.sleep(2)
+    except Exception as e:
+        print(f"Could not find login button: {e}")
+        print("Keeping browser open for 60 seconds for inspection...")
+        time.sleep(60)
+        driver.close()
+        return
 
     # fill out the email input field
     driver.find_element(By.XPATH, '//*[@id="login_email"]').send_keys(config["FOREUP_USERNAME"])
